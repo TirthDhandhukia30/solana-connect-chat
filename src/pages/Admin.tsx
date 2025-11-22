@@ -99,7 +99,7 @@ export default function Admin() {
                       <TableCell>{booking.amount_sol} SOL</TableCell>
                       <TableCell className="font-mono text-xs">
                         <a
-                          href={`https://explorer.solana.com/tx/${booking.transaction_signature}?cluster=devnet`}
+                          href={`https://explorer.solana.com/tx/${booking.transaction_signature}?cluster=mainnet-beta`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline"
