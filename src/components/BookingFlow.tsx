@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, Video, ArrowRight, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const BOOKING_PRICE_SOL = 0.1;
 const RECIPIENT_WALLET = "9YsbyWnNegmSvUPoXqt4qo1km9grX8dBc6gQz7PAKEGY";
+const GOOGLE_MEET_URL = "https://meet.google.com/dummy-meet-link";
 
 export const BookingFlow = () => {
   const { publicKey, sendTransaction } = useWallet();
@@ -49,6 +51,32 @@ export const BookingFlow = () => {
 
       const signature = await sendTransaction(transaction, connection);
       await connection.confirmTransaction(signature, "confirmed");
+
+      // Save booking to database
+      const selectedSlotInfo = timeSlots.find(slot => slot.id === selectedSlot);
+      const slotText = selectedSlotInfo 
+        ? `${selectedSlotInfo.date} at ${selectedSlotInfo.time}` 
+        : selectedSlot;
+
+      const { error: dbError } = await supabase
+        .from("bookings")
+        .insert({
+          wallet_address: publicKey.toBase58(),
+          transaction_signature: signature,
+          selected_slot: slotText,
+          amount_sol: BOOKING_PRICE_SOL,
+          google_meet_url: GOOGLE_MEET_URL,
+          booking_status: "confirmed",
+        });
+
+      if (dbError) {
+        console.error("Error saving booking:", dbError);
+        toast({
+          title: "Warning",
+          description: "Payment confirmed but failed to save booking. Please contact support.",
+          variant: "destructive",
+        });
+      }
 
       toast({
         title: "Payment Successful!",
@@ -100,12 +128,12 @@ export const BookingFlow = () => {
                   <div>
                     <p className="font-semibold">Meeting Link</p>
                     <a 
-                      href="https://meet.google.com/dummy-link-abc"
+                      href={GOOGLE_MEET_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-chess-gold hover:underline break-all"
                     >
-                      https://meet.google.com/dummy-link-abc
+                      {GOOGLE_MEET_URL}
                     </a>
                   </div>
                 </div>
